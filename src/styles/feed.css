@@ -1,33 +1,188 @@
-﻿.like-comment-section {
-    display: flex;
-    gap: 10px;
+﻿/* Reset margin & set a consistent font */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #fafafa;
+}
+
+/* 🔹 Centering Newsfeed */
+.newsfeed-container {
+    width: 50%;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+/* 🔹 Add Space to Content to Avoid Overlapping with Fixed Navbar */
+.newsfeed-container,
+.profile-container,
+.create-post-container {
+    margin-top: 70px; /* ✅ Prevent navbar overlap */
+}
+/* 🔹 Post Styling */
+.post-card {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+    .post-card:hover {
+        transform: translateY(-2px);
+    }
+
+/* 🔹 Post Image */
+.post-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
     margin-top: 10px;
 }
 
-.like-button, .comment-button {
-    background: #2575fc;
-    color: white;
-    border: none;
-    padding: 7px 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: 0.3s;
+/* 🔹 Post Header (User Info & Time) */
+.post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
-    .like-button:hover, .comment-button:hover {
-        background: #1d5ed4;
+/* 🔹 Profile Picture */
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid #2575fc;
+}
+
+/* 🔹 Like & Comment Section */
+.like-comment-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+}
+
+.like-button,
+.comment-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+    transition: 0.3s ease-in-out;
+}
+
+    .like-button:hover,
+    .comment-button:hover {
+        transform: scale(1.1);
     }
 
-.comment-box {
-    width: 80%;
-    padding: 7px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.liked {
+    color: red;
+    transition: transform 0.2s ease-in-out;
 }
 
+    .liked:hover {
+        transform: scale(1.2);
+    }
+
+/* 🔹 Comments Section */
 .comment-section {
     margin-top: 10px;
     padding: 10px;
     background: #f5f5f5;
-    border-radius: 5px;
+    border-radius: 8px;
+    max-height: 150px; /* ✅ Scrollable comments */
+    overflow-y: auto;
+}
+
+/* 🔹 See More Comments */
+.see-more {
+    background: none;
+    border: none;
+    color: #2575fc;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+    .see-more:hover {
+        text-decoration: underline;
+    }
+
+/* 🔹 Centered Post Time */
+.post-time {
+    font-size: 12px;
+    color: gray;
+    margin-left: auto;
+}
+
+/* 🔹 Delete & Edit Post */
+.delete-post, .edit-post {
+    background: none;
+    border: none;
+    color: red;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+    .delete-post:hover, .edit-post:hover {
+        text-decoration: underline;
+        transform: scale(1.1);
+    }
+
+/* 🔹 Username Mentions & Hashtags */
+.mention {
+    color: #2575fc;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.hashtag {
+    color: #ff4500;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+
+.comment-icon {
+    font-size: 18px;
+    color: gray;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+    .comment-icon:hover {
+        color: #2575fc; /* Turns blue on hover */
+        transform: scale(1.1);
+    }
+
+
+
+
+/* 🔹 Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    .newsfeed-container {
+        max-width: 100%;
+        padding: 0 10px;
+    }
+
+    .profile-container {
+        max-width: 90%;
+        padding: 15px;
+    }
+
+    .floating-post-btn {
+        bottom: 50px;
+        right: 15px;
+    }
 }

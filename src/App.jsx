@@ -1,27 +1,36 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+﻿import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
 import Newsfeed from "./pages/Newsfeed.jsx";
 import Notifications from "./pages/Notifications.jsx";
-import Navbar from "./components/Navbar.jsx"; // Import Navbar
+import Navbar from "./components/Navbar.jsx";
+import "./styles/global.css";
 
-const App = () => {
+const AppContent = () => {
+    const location = useLocation();
+    const hideNavbar = location.pathname === "/login" || location.pathname === "/signup";
+
     return (
-        <Router>
-            <Navbar /> {/* Show Navbar on all pages */}
+        <div>
+            {!hideNavbar && <Navbar />} {/* ✅ Navbar only on non-login pages */}
             <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/create-post" element={<CreatePost />} />
                 <Route path="/feed" element={<Newsfeed />} />
                 <Route path="/notifications" element={<Notifications />} />
-                <Route path="/create" element={<CreatePost />} />
-                {/* More routes will be added later */}
+                <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
-        </Router>
+        </div>
     );
 };
+
+const App = () => (
+    <Router>
+        <AppContent />
+    </Router>
+);
 
 export default App;
