@@ -1,34 +1,31 @@
 ﻿/* ========================================== */
-/* 🔹 FIXED NAVBAR WITH CENTERED ICONS */
+/* 🔹 MODERN NAVBAR DESIGN */
 /* ========================================== */
 .navbar {
     display: flex;
-    justify-content: space-evenly;
-    flex-wrap:wrap
-    align-items: center; /* ✅ Center align items vertically */
-    padding: 10px 20px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
     background-color: white;
     border-bottom: 1px solid #dbdbdb;
-    position: fixed; /* ✅ Keep navbar fixed */
+    position: fixed;
     top: 0;
     width: 100%;
     z-index: 1000;
-
+    transition: transform 0.3s ease-in-out;
 }
 
+/* ✅ Hide Navbar on Scroll */
+.hidden-navbar {
+    transform: translateY(-100%);
+}
 
-/* ========================================== */
-/* 🔹 NAVBAR FIXES (Keeps Navbar Fixed) */
-/* ========================================== */
-
-
-/* 🔹 Nav Logo */
+/* 🔹 NAVBAR LOGO */
 .nav-logo {
-    font-size: 24px;
+    font-size: 26px; /* ✅ Bigger Title */
     font-weight: bold;
     color: black;
     text-decoration: none;
-    padding: 10px 15px;
     transition: color 0.3s ease-in-out;
 }
 
@@ -36,81 +33,76 @@
         color: #1a5ac7;
     }
 
-/* 🔹 Navigation Icons */
+/* 🔹 NAVBAR ICONS */
 .nav-icons {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 12px; /* ✅ Reduced Gap for Compact Look */
 }
 
 .nav-icon {
-    font-size: 22px;
+    font-size: 28px; /* ✅ Bigger Icons */
     color: black;
     transition: transform 0.2s ease-in-out;
 }
 
     .nav-icon:hover {
-        transform: scale(1.1);
+        transform: scale(1.15);
         color: #2575fc;
     }
-/* 🔹 Comment Icon Styling */
-/* ========================================== */
-/* 🔹 NAVBAR ICONS (Center Aligned) */
-/* ========================================== */
-.nav-icons {
-    display: flex;
-    align-items: center; /* ✅ Center vertically */
-    justify-content: center; /* ✅ Ensure icons are balanced */
-    gap: 15px;
+
+/* 🔹 NOTIFICATION ICON & BADGE */
+.notification-container {
+    position: relative;
+    cursor: pointer;
 }
 
-    /* ✅ Default styles for all icons */
-    .nav-icons a,
-    .nav-icons button {
-        display: flex;
-        align-items: center; /* ✅ Center individual icons */
-        justify-content: center;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 22px;
-        color: black;
-        transition: transform 0.2s ease-in-out;
-        height: 40px; /* ✅ Ensure equal height */
-        width: 40px; /* ✅ Ensure equal width */
-        border-radius: 50%; /* ✅ Optional: Make circular effect */
-    }
-
-        .nav-icons a:hover,
-        .nav-icons button:hover {
-            transform: scale(1.1);
-            color: #2575fc;
-        }
-
-/* ========================================== */
-/* 🔹 CREATE POST BUTTON (FiPlusCircle) */
-/* ========================================== */
-.create-post-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: #2575fc;
+.notification-icon {
+    font-size: 28px;
+    color: black;
     transition: transform 0.2s ease-in-out;
 }
 
-    .create-post-btn:hover {
-        transform: scale(1.2);
-        color: #1d5ed6;
+    .notification-icon:hover {
+        transform: scale(1.1);
+        color: #2575fc;
     }
-/* 🔹 Floating Create Post Button */
+
+.notification-dot {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    background: red;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 50%;
+}
+
+/* 🔹 NOTIFICATION DROPDOWN */
+.notification-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    width: 250px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    z-index: 1000;
+}
+
+/* 🔹 FLOATING CREATE POST BUTTON */
 .floating-post-btn {
     position: fixed;
-    bottom: 70px;
     right: 20px;
-    font-size: 32px;
+    font-size: 36px;
     color: #2575fc;
     background: white;
-    padding: 10px;
+    padding: 5px;
     border-radius: 50%;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     transition: 0.3s ease-in-out;
@@ -118,45 +110,28 @@
 
     .floating-post-btn:hover {
         transform: scale(1.1);
-        color: #1a5ac7;
     }
 
-/* 🔹 Adjust for Mobile */
-@media screen and (max-width: 768px) {
-    .floating-post-btn {
-        bottom: 50px;
-        right: 15px;
-    }
-}
-
-/* ========================================== */
-/* 🔹 LOGOUT BUTTON */
-/* ========================================== */
-.logout-btn {
-    font-size: 22px;
-    color: red;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out;
-}
-
-    .logout-btn:hover {
-        transform: scale(1.1);
-        color: darkred;
-    }
-
-/* ========================================== */
 /* 🔹 MOBILE RESPONSIVENESS */
-/* ========================================== */
 @media screen and (max-width: 768px) {
     .navbar {
         padding: 10px 15px;
     }
 
     .nav-icons {
-        gap: 10px;
+        gap: 8px;
     }
 
-    .create-post-btn {
-        font-size: 28px; /* ✅ Adjust size for mobile */
+    .nav-icon {
+        font-size: 24px;
+    }
+
+    .nav-logo {
+        font-size: 22px;
+    }
+
+    .floating-post-btn {
+        bottom: 10px;
+        right: 15px;
     }
 }

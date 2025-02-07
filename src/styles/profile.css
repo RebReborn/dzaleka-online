@@ -1,4 +1,5 @@
-﻿.profile-container {
+﻿/* ✅ FIXED PROFILE CONTAINER */
+.profile-container {
     width: 50%;
     margin: 40px auto;
     padding: 20px;
@@ -8,17 +9,11 @@
     text-align: center;
 }
 
-/* Profile Header */
+/* ✅ PROFILE HEADER */
 .profile-header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
-}
-
-.profile-pic-label {
-    cursor: pointer;
-    position: relative;
 }
 
 .profile-pic {
@@ -28,25 +23,14 @@
     border: 3px solid #2575fc;
     object-fit: cover;
     margin-bottom: 15px;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.3s ease-in-out, transform 0.2s;
 }
 
-.profile-pic-label:hover .profile-pic {
-    opacity: 0.7;
-}
-
-/* Profile Info */
+/* ✅ PROFILE INFO */
 .profile-info {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     text-align: left;
     padding: 10px;
 }
-
-    .profile-info label {
-        font-weight: bold;
-    }
 
     .profile-info input,
     .profile-info textarea {
@@ -64,52 +48,14 @@
         cursor: pointer;
         margin-top: 10px;
         border-radius: 5px;
-        font-size: 16px;
+        transition: background 0.3s ease-in-out;
     }
 
         .profile-info button:hover {
             background: #1a5ac7;
         }
 
-/* User Posts */
-.user-posts {
-    margin-top: 20px;
-}
-
-.post-card {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    text-align: left;
-}
-
- 
-
-.post-time {
-    font-size: 12px;
-    color: gray;
-    margin-top: 5px;
-}
-
-/* Delete Post Button */
-.delete-post {
-    background: red;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-    margin-top: 10px;
-}
-
-    .delete-post:hover {
-        background: darkred;
-    }
-
-/* ✅ Responsive Design */
+/* ✅ FIX MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
     .profile-container {
         width: 90%;
@@ -120,20 +66,3 @@
         height: 100px;
     }
 }
-
-/* Delete Post Button */
-.delete-post {
-    background: red;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-    margin-top: 10px;
-    transition: background 0.3s;
-}
-
-    .delete-post:hover {
-        background: darkred;
-    }

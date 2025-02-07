@@ -1,8 +1,17 @@
-#root {
+﻿#root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+body, html {
+    touch-action: auto;  /* ✅ Allows scrolling */
+    -ms-touch-action: auto;
+    user-select: none;  /* Prevents text selection */
+    overflow-x: hidden; /* Prevents horizontal scroll */
+    overflow-y: auto;   /* ✅ Enables vertical scrolling */
+    height: 100%;
 }
 
 .logo {

@@ -1,27 +1,72 @@
-﻿/* Reset margin & set a consistent font */
-body {
+﻿/* ✅ Global Fixes */
+* {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #fafafa;
+    padding: 0;
+    box-sizing: border-box; /* Ensures consistent sizing */
 }
 
-/* 🔹 Centering Newsfeed */
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light;
+    color: #000; /* Ensures proper contrast */
+    background-color: white;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ✅ Fix Scrolling & Prevent Unwanted Zooming */
+body, html {
+    touch-action: pan-y; /* Allow vertical scrolling, prevent pinch zoom */
+    -ms-touch-action: pan-y; /* For older Microsoft browsers */
+    user-select: none; /* Prevent text selection */
+    width: 100%;
+    overflow-x: hidden; /* Prevents horizontal scrolling */
+}
+
+/* ✅ Extended Newsfeed to Full Width */
 .newsfeed-container {
-    width: 50%;
-    margin: 40px auto;
-    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 60px;
+    padding: 10px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
 }
-/* 🔹 Add Space to Content to Avoid Overlapping with Fixed Navbar */
-.newsfeed-container,
-.profile-container,
-.create-post-container {
-    margin-top: 70px; /* ✅ Prevent navbar overlap */
+
+/* ✅ Navbar Fix: Prevents Overlap */
+.navbar {
+    width: 100%;
+    padding: 10px 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: white;
+    border-bottom: 1px solid #dbdbdb;
+    z-index: 1000;
 }
-/* 🔹 Post Styling */
+
+/* ✅ Fix Floating Post Button */
+.floating-post-btn {
+    position: fixed;
+    bottom: 60px;
+    right: 20px;
+    font-size: 32px;
+    color: #2575fc;
+    background: white;
+    padding: 12px;
+    border-radius: 50%;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    transition: 0.3s ease-in-out;
+}
+
+    .floating-post-btn:hover {
+        transform: scale(1.1);
+    }
+
+/* ✅ Post Card Styling */
 .post-card {
     background-color: #fff;
     padding: 15px;
@@ -29,13 +74,44 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease-in-out;
+    width: 100%;
 }
 
     .post-card:hover {
         transform: translateY(-2px);
     }
 
-/* 🔹 Post Image */
+/* ✅ Reduced Profile Picture Size & Aligned Username Closer */
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.profile-pic {
+    width: 35px; /* Smaller Profile Picture */
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 5px; /* Reduced Spacing */
+    border: 2px solid #2575fc;
+}
+
+.username {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* 🔹 Post Time (Timestamp) */
+.post-time {
+    font-size: 12px;
+    color: gray;
+    margin-left: auto;
+    align-self: center;
+    white-space: nowrap; /* Prevents wrapping */
+}
+
+/* ✅ Post Image */
 .post-image {
     width: 100%;
     height: auto;
@@ -43,47 +119,28 @@ body {
     margin-top: 10px;
 }
 
-/* 🔹 Post Header (User Info & Time) */
-.post-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-/* 🔹 Profile Picture */
-.profile-pic {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
-    border: 2px solid #2575fc;
-}
-
-/* 🔹 Like & Comment Section */
+/* ✅ Like & Comment Section */
 .like-comment-section {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     padding-top: 10px;
 }
 
-.like-button,
-.comment-button {
+.like-button {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 16px;
-    margin-right: 10px;
-    transition: 0.3s ease-in-out;
+    font-size: 18px;
+    transition: transform 0.3s ease-in-out;
 }
 
-    .like-button:hover,
-    .comment-button:hover {
+    .like-button:hover {
         transform: scale(1.1);
     }
 
+/* ✅ Like Animation */
 .liked {
     color: red;
     transition: transform 0.2s ease-in-out;
@@ -93,92 +150,93 @@ body {
         transform: scale(1.2);
     }
 
-/* 🔹 Comments Section */
+/* ✅ Double Tap Like Animation */
+.heart-animation {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    animation: heartFadeOut 0.8s ease-in-out forwards;
+}
+
+@keyframes heartFadeOut {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+    }
+}
+
+/* ✅ Comment Section */
 .comment-section {
-    margin-top: 10px;
-    padding: 10px;
     background: #f5f5f5;
     border-radius: 8px;
-    max-height: 150px; /* ✅ Scrollable comments */
+    padding: 10px;
+    max-height: 200px;
     overflow-y: auto;
 }
 
-/* 🔹 See More Comments */
-.see-more {
-    background: none;
-    border: none;
-    color: #2575fc;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-    .see-more:hover {
-        text-decoration: underline;
-    }
-
-/* 🔹 Centered Post Time */
-.post-time {
-    font-size: 12px;
-    color: gray;
-    margin-left: auto;
-}
-
-/* 🔹 Delete & Edit Post */
-.delete-post, .edit-post {
-    background: none;
-    border: none;
-    color: red;
-    cursor: pointer;
-    font-size: 14px;
-    margin-left: 10px;
-    transition: 0.3s;
-}
-
-    .delete-post:hover, .edit-post:hover {
-        text-decoration: underline;
-        transform: scale(1.1);
-    }
-
-/* 🔹 Username Mentions & Hashtags */
-.mention {
-    color: #2575fc;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.hashtag {
-    color: #ff4500;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-
+/* ✅ Comment Icon */
 .comment-icon {
     font-size: 18px;
-    color: gray;
+    color: black;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
 }
 
     .comment-icon:hover {
-        color: #2575fc; /* Turns blue on hover */
+        color: #2575fc;
         transform: scale(1.1);
     }
 
+/* ✅ Comment Overlay */
+.comment-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
 
+.comment-box {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: left;
+}
 
-
-/* 🔹 Mobile Responsiveness */
-@media screen and (max-width: 768px) {
-    .newsfeed-container {
-        max-width: 100%;
-        padding: 0 10px;
+/* ✅ Mobile Fixes */
+@media (max-width: 768px) {
+    .newsfeed-container,
+    .profile-container {
+        width: 100%;
+        padding: 15px;
     }
 
-    .profile-container {
-        max-width: 90%;
-        padding: 15px;
+    .profile-pic {
+        width: 30px;
+        height: 30px;
+    }
+
+    .navbar {
+        padding: 8px 10px;
     }
 
     .floating-post-btn {

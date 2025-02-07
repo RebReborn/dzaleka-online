@@ -1,55 +1,96 @@
-﻿.post-container {
-    width: 100%;
-    max-width: 500px;
-    margin: 20px auto;
+﻿/* ========================================== */
+/* 🔹 CREATE POST PAGE STYLING */
+/* ========================================== */
+.post-container {
+    width: 90%;
+    max-width: 600px;
+    margin: 80px auto 20px; /* ✅ Prevents overlap with navbar */
     padding: 20px;
     background: white;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
-body {
-    background-color: #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+/* ✅ Ensures the navbar does not overlap the content */
+.create-post-container {
+    margin-top: 80px; /* ✅ Matches the navbar height */
 }
-textarea {
+
+/* ✅ Style for the Title Input */
+.post-title-input {
     width: 100%;
     padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
     border: 1px solid #ddd;
     border-radius: 5px;
+}
+
+/* 🔹 Textarea for Post Content */
+textarea {
+    width: 100%;
+    height: 100px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 16px;
     resize: none;
 }
 
+/* 🔹 File Upload Input */
 input[type="file"] {
-    margin: 10px 0;
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px;
 }
 
+/* 🔹 Image Preview */
 .image-preview {
     margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 100%;
-    overflow: hidden;
+    text-align: center;
 }
 
 .preview-image {
     max-width: 100%;
-    max-height: 300px; /* Adjust to your preference */
-    object-fit: contain;
-    border-radius: 10px;
-    border: 1px solid #ddd;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 10px;
 }
 
-
+/* 🔹 Post Button */
 button {
+    width: 100%;
+    padding: 10px;
     background: #2575fc;
     color: white;
+    font-size: 16px;
     border: none;
-    padding: 10px;
     cursor: pointer;
     border-radius: 5px;
-    width: 100%;
+    margin-top: 10px;
+    transition: background 0.3s ease-in-out;
+}
+
+    button:hover {
+        background: #1d5ed6;
+    }
+
+    button:disabled {
+        background: gray;
+        cursor: not-allowed;
+    }
+
+/* ========================================== */
+/* 🔹 MOBILE RESPONSIVENESS */
+/* ========================================== */
+@media screen and (max-width: 768px) {
+    .post-container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .create-post-container {
+        margin-top: 70px; /* ✅ Adjusted for mobile screens */
+    }
 }

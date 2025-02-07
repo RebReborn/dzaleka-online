@@ -1,50 +1,114 @@
 ﻿import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { signOut, onAuthStateChanged } from "firebase/auth"; 
-import { db, auth } from "../firebase"; 
-
-import { FiHome, FiUser, FiLogOut, FiPlusCircle } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { db, auth } from "../firebase";
+import {
+    collection,
+    query,
+    where,
+    onSnapshot,
+    updateDoc,
+    doc,
+    writeBatch
+} from "firebase/firestore";
+import { FiHome, FiUser, FiPlusCircle, FiBell } from "react-icons/fi";
 import "../styles/navbar.css";
 
 const Navbar = () => {
-    const [userData, setUserData] = useState(null);
-    const navigate = useNavigate();
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [hideNavbar, setHideNavbar] = useState(false);
+    let lastScrollY = window.scrollY;
 
     useEffect(() => {
-        const fetchUserData = async () => {
-            if (auth.currentUser) {
-                const userRef = doc(db, "users", auth.currentUser.uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    setUserData(userSnap.data());
-                }
-            }
-        };
-        fetchUserData();
+        // Dynamically inject meta tag to prevent zooming
+        const metaTag = document.createElement("meta");
+        metaTag.name = "viewport";
+        metaTag.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
+        document.head.appendChild(metaTag);
     }, []);
 
-    const handleLogout = async () => {
-        await signOut(auth);
-        navigate("/login");
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const q = query(
+            collection(db, "notifications"),
+            where("userId", "==", auth.currentUser.uid),
+            where("seen", "==", false)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedNotifications = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            setUnreadCount(fetchedNotifications.length);
+            setNotifications(fetchedNotifications);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            setHideNavbar(currentScrollY > lastScrollY && currentScrollY > 50);
+            lastScrollY = currentScrollY;
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const markAllAsRead = async () => {
+        if (!notifications.length) return;
+
+        const batch = writeBatch(db);
+        notifications.forEach((notification) => {
+            if (!notification.seen) {
+                const notificationRef = doc(db, "notifications", notification.id);
+                batch.update(notificationRef, { seen: true });
+            }
+        });
+
+        await batch.commit();
+        setUnreadCount(0);
     };
 
     return (
-        <nav className="navbar">
-            <div className="nav-left">
-                <Link to="/feed" className="nav-logo">Dzaleka Online</Link>
-            </div>
-            <div className="nav-icons">
-                <Link to="/feed" className="nav-icon"><FiHome /></Link>
-                <Link to="/profile" className="nav-icon"><FiUser /></Link>
-                <button onClick={handleLogout} className="nav-icon logout-btn"><FiLogOut /></button>
-            </div>
+        <>
+            <nav className={`navbar ${hideNavbar ? "hidden-navbar" : ""}`}>
+                <div className="nav-left">
+                    <Link to="/feed" className="nav-logo">Dzaleka Online</Link>
+                </div>
+                <div className="nav-icons">
+                    <Link to="/feed" className="nav-icon"><FiHome /></Link>
 
-            {/* Floating Post Button */}
+                    <div className="notification-container" onClick={() => {
+                        setShowDropdown(!showDropdown);
+                        markAllAsRead();
+                    }}>
+                        <FiBell className="nav-icon notification-icon" />
+                        {unreadCount > 0 && <span className="notification-dot">{unreadCount}</span>}
+                    </div>
+
+                    <Link to="/profile" className="nav-icon"><FiUser /></Link>
+                </div>
+
+                {showDropdown && (
+                    <div className="notification-dropdown">
+                        {notifications.length === 0 ? (
+                            <p>No notifications yet</p>
+                        ) : (
+                            notifications.map((notif) => (
+                                <p key={notif.id}>{notif.message}</p>
+                            ))
+                        )}
+                    </div>
+                )}
+            </nav>
+
             <Link to="/create-post" className="floating-post-btn">
                 <FiPlusCircle />
             </Link>
-        </nav>
+        </>
     );
 };
 
