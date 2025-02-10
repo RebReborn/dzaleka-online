@@ -6,6 +6,7 @@ import CreatePost from "./pages/CreatePost.jsx";
 import Newsfeed from "./pages/Newsfeed.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Navbar from "./components/Navbar.jsx";
+import SignUp from "./pages/SignUp";
 import "./styles/global.css";
 
 const App = () => {
@@ -58,6 +59,7 @@ const App = () => {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/create" element={<CreatePost />} />
                 <Route path="*" element={<Navigate to="/login" />} />
+                <Route path="/signup" element={<SignUp />} />
             </Routes>
         </Router>
     );

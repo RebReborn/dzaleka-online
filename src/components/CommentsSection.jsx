@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { db, auth } from "../firebase";
 import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import "../styles/comments.css";
@@ -6,6 +6,8 @@ import "../styles/comments.css";
 const CommentsSection = ({ post, onClose }) => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
+    const commentBoxRef = useRef(null);
+    const inputRef = useRef(null);
 
     useEffect(() => {
         if (post.comments) {
@@ -14,6 +16,25 @@ const CommentsSection = ({ post, onClose }) => {
             setComments([]);
         }
     }, [post]);
+
+    // ✅ Auto-focus input when comment section opens
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, []);
+
+    // ✅ Close comment box when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (commentBoxRef.current && !commentBoxRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [onClose]);
 
     const handleCommentSubmit = async () => {
         if (!newComment.trim()) return;
@@ -35,7 +56,7 @@ const CommentsSection = ({ post, onClose }) => {
             userId,
             username,
             text: newComment,
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
             userProfilePic
         };
 
@@ -50,16 +71,17 @@ const CommentsSection = ({ post, onClose }) => {
 
     return (
         <div className="comment-overlay">
-            <div className="comment-box">
+            <div className="comment-box" ref={commentBoxRef}>
                 <button className="close-btn" onClick={onClose}>✖</button>
                 <h3>Comments</h3>
 
+                {/* ✅ Scrollable Comment List */}
                 <div className="comment-list">
                     {comments.length > 0 ? (
                         comments.map((comment, index) => (
                             <div key={index} className="comment-item">
                                 <img src={comment.userProfilePic} alt="User" className="comment-profile-pic" />
-                                <div>
+                                <div className="comment-content">
                                     <strong>{comment.username}</strong>
                                     <p className="comment-text">{comment.text}</p>
                                 </div>
@@ -70,6 +92,7 @@ const CommentsSection = ({ post, onClose }) => {
                     )}
                 </div>
 
+                {/* ✅ Comment Input Field */}
                 <div className="comment-input-box">
                     <input
                         type="text"
@@ -77,6 +100,7 @@ const CommentsSection = ({ post, onClose }) => {
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         className="comment-input"
+                        ref={inputRef}
                     />
                     <button onClick={handleCommentSubmit} className="comment-btn">Post</button>
                 </div>

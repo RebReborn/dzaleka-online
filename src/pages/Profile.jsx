@@ -1,9 +1,11 @@
 ﻿import React, { useState, useEffect } from "react";
 import { db, auth, storage } from "../firebase";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { ref, deleteObject } from "firebase/storage";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
+import { ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate, useParams } from "react-router-dom";
+import { FaTrash, FaEdit, FaSave } from "react-icons/fa";  // ✅ Import Delete & Edit Icons
 import { useSwipeable } from "react-swipeable"; // ✅ Swipe gestures
+import { signOut } from "firebase/auth"; // ✅ Import signOut
 import Swal from "sweetalert2";
 import "../styles/profile.css";
 
@@ -15,11 +17,20 @@ const Profile = () => {
     const [profilePic, setProfilePic] = useState("https://i.pravatar.cc/150");
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState(false);
-    const [streak, setStreak] = useState(0); // ✅ Streak count
-    const [points, setPoints] = useState(0); // ✅ Total points
+    const [editingPostId, setEditingPostId] = useState(null);
+    const [setEditing] = useState(null);
+    const [editingPostContent, setEditingPostContent] = useState("");
+    const [streak, setStreak] = useState(0);
+    const [points, setPoints] = useState(0);
+    const [seeMoreBio, setSeeMoreBio] = useState(false);
+    const [expandedPosts, setExpandedPosts] = useState({});
+    const [lastActiveDate, setLastActiveDate] = useState(null);
     const navigate = useNavigate();
     const isCurrentUser = !userId || userId === auth.currentUser?.uid;
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [newName, setNewName] = useState(name);
+    const [newBio, setNewBio] = useState(bio);
+
 
     useEffect(() => {
         if (!auth.currentUser) {
@@ -32,14 +43,21 @@ const Profile = () => {
                 const uid = userId || auth.currentUser.uid;
                 const userRef = doc(db, "users", uid);
                 const userSnap = await getDoc(userRef);
+
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
                     setUser(userData);
                     setName(userData.name || "Anonymous");
                     setBio(userData.bio || "No bio available");
                     setProfilePic(userData.photoURL || "https://i.pravatar.cc/150");
-                    setStreak(userData.streak || 0); // ✅ Load streak
-                    setPoints(userData.points || 0); // ✅ Load points
+                    setStreak(userData.streak || 0); // ✅ Set streak before calling updateStreak
+                    setPoints(userData.points || 0);
+                    setLastActiveDate(userData.lastActiveDate || null);
+                    setNewName(userData.name || "");
+                    setNewBio(userData.bio || "");
+
+                    // ✅ Call updateStreak AFTER setting streak state
+                    await updateStreak(userRef, userData.lastActiveDate);
                 }
             } catch (error) {
                 console.error("Error fetching user profile:", error);
@@ -48,40 +66,163 @@ const Profile = () => {
             }
         };
 
-        const fetchUserPosts = async () => {
+        // ✅ Streak System - Keeps Daily Record
+        const updateStreak = async (userRef, lastActive) => {
+            const today = new Date().toDateString();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayString = yesterday.toDateString();
+
+            let updatedStreak = streak; // Get current streak
+
+            if (!lastActive) {
+                console.log("❗ No last active date found. Initializing streak.");
+                updatedStreak = 1;
+            } else if (lastActive === today) {
+                console.log("🔥 User already active today. Streak unchanged:", updatedStreak);
+                return; // Don't update if already active today
+            } else if (lastActive === yesterdayString) {
+                updatedStreak += 1; // ✅ Increase streak
+                console.log("✅ Streak increased to:", updatedStreak);
+            } else {
+                updatedStreak = 1; // ✅ Reset streak if missed a day
+                console.log("⚠️ Streak reset to:", updatedStreak);
+            }
+
+            setStreak(updatedStreak); // Update React state
+            setLastActiveDate(today);
+
             try {
-                const uid = userId || auth.currentUser.uid;
-                const q = query(collection(db, "posts"), where("userId", "==", uid));
-                const querySnapshot = await getDocs(q);
-                const userPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setPosts(userPosts);
+                await updateDoc(userRef, {
+                    streak: updatedStreak,
+                    lastActiveDate: today, // ✅ Ensure Firestore updates last active date
+                });
+                console.log("🔥 Streak updated in Firestore!");
             } catch (error) {
-                console.error("Error fetching user posts:", error);
+                console.error("❌ Error updating streak:", error);
             }
         };
 
+
+
         fetchUserProfile();
         fetchUserPosts();
-    }, [userId, navigate]);
+    }, [userId, navigate, streak, lastActiveDate]);
 
-    const handleSave = async () => {
+    // ✅ Logout function (placed correctly)
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigate("/login"); // ✅ Redirect to Login Page
+            Swal.fire({ icon: "success", title: "Logged Out!", text: "You have successfully logged out.", timer: 2000, showConfirmButton: false });
+        } catch (error) {
+            console.error("❌ Logout Failed:", error);
+            Swal.fire({ icon: "error", title: "Logout Failed", text: "Something went wrong while logging out." });
+        }
+    };
+
+    const handleProfilePictureChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const storageRef = ref(storage, `profile_pictures/${auth.currentUser.uid}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        setProfilePic(downloadURL);
+
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, { photoURL: downloadURL });
+
+        Swal.fire({
+            icon: "success",
+            title: "Profile Picture Updated!",
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    };
+
+    const handleSaveProfile = async () => {
         if (!auth.currentUser) return;
 
         try {
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(userRef, { name, bio });
+            await updateDoc(userRef, { name: newName, bio: newBio });
+
+            setName(newName);
+            setBio(newBio);
+            setIsEditingProfile(false);
 
             Swal.fire({
                 icon: "success",
                 title: "Profile Updated!",
-                text: "Your profile has been successfully updated.",
+                text: "Your profile changes have been saved.",
                 timer: 2000,
                 showConfirmButton: false,
             });
 
             setEditing(false);
+
         } catch (error) {
             console.error("Error updating profile:", error);
+        }
+    };
+
+    const fetchUserPosts = async () => {
+        try {
+            const uid = userId || auth.currentUser.uid;
+            const q = query(
+                collection(db, "posts"),
+                where("userId", "==", uid),
+                orderBy("createdAt", "desc")
+            );
+            const querySnapshot = await getDocs(q);
+            const userPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setPosts(userPosts);
+        } catch (error) {
+            console.error("Error fetching user posts:", error);
+        }
+    };
+
+    const toggleSeeMorePost = (postId) => {
+        setExpandedPosts((prevState) => ({
+            ...prevState,
+            [postId]: !prevState[postId],
+        }));
+    };
+
+    // ✅ Function to Enable Editing
+    const handleEditPost = (postId, content) => {
+        setEditingPostId(postId);
+        setEditingPostContent(content || ""); // Ensure there's always content
+    };
+
+    // ✅ Function to Save Edited Post
+    const handleSaveEdit = async (postId) => {
+        if (!editingPostContent.trim()) {
+            Swal.fire({ icon: "warning", title: "Oops!", text: "Post content cannot be empty!" });
+            return;
+        }
+
+        try {
+            const postRef = doc(db, "posts", postId);
+            await updateDoc(postRef, { content: editingPostContent });
+
+            // ✅ Update UI Immediately After Save
+            setPosts((prevPosts) =>
+                prevPosts.map((post) =>
+                    post.id === postId ? { ...post, content: editingPostContent } : post
+                )
+            );
+
+            // ✅ Reset Editing State
+            setEditingPostId(null);
+            setEditingPostContent("");
+
+            Swal.fire({ icon: "success", title: "Post Updated!", text: "Your post has been updated successfully.", timer: 2000, showConfirmButton: false });
+        } catch (error) {
+            console.error("Error updating post:", error);
+            Swal.fire({ icon: "error", title: "Oops!", text: "Something went wrong while updating the post." });
         }
     };
 
@@ -97,11 +238,12 @@ const Profile = () => {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await deleteDoc(doc(db, "posts", postId)); // ✅ Delete post from Firestore
+                    await deleteDoc(doc(db, "posts", postId));
 
-                    if (imageUrl) {
+                    if (imageUrl)
+                        if (imageUrl && imageUrl.includes("firebasestorage.googleapis.com")) {
                         const imageRef = ref(storage, imageUrl);
-                        await deleteObject(imageRef); // ✅ Delete image from Storage
+                        await deleteObject(imageRef);
                     }
 
                     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
@@ -129,85 +271,150 @@ const Profile = () => {
     const handlers = useSwipeable({
         onSwipedRight: () => navigate("/feed"), // Swipe Right to Go to Feed
         trackMouse: true,
-    });
 
+    });
     return (
+
         <div className="profile-container" {...handlers} style={{ paddingTop: "10px" }}>
             {loading ? (
                 <p>Loading profile...</p>
             ) : (
                 <>
                     <div className="profile-header">
-                        <label htmlFor="profilePicUpload" className="profile-pic-label">
+                        {/* ✅ Profile Picture Upload */}
+                        <label htmlFor="profile-pic-upload">
                             <img src={profilePic} alt="Profile" className="profile-pic" />
                         </label>
-                        {isCurrentUser && (
-                            <input
-                                type="file"
-                                id="profilePicUpload"
-                                accept="image/*"
-                                style={{ display: "none" }}
-                                onChange={(e) => setProfilePic(URL.createObjectURL(e.target.files[0]))}
-                            />
-                        )}
-                        <h2>{name}</h2>
-                        <p className="bio">{bio}</p>
-
-                        {/* ✅ Display Streak & Points */}
-                        <div className="streak-points">
-                            <p>🔥 Streak: {streak} Days</p>
-                            <p>🏆 Points: {points}</p>
-                        </div>
-                    </div>
-
-                    {isCurrentUser && (
-                        <div className="profile-info">
-                            {editing ? (
-                                <>
-                                    <label>Username:</label>
-                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
-
-                                    <label>Bio:</label>
-                                    <textarea value={bio} onChange={(e) => setBio(e.target.value)} />
-
-                                    <button onClick={handleSave}>Save Profile</button>
-                                </>
-                            ) : (
-                                <button className="edit-profile-btn" onClick={() => setEditing(true)}>
-                                    Edit Profile
-                                </button>
+                        <input
+                            type="file"
+                            id="profile-pic-upload"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={(e) => setProfilePic(URL.createObjectURL(e.target.files[0]))}
+                        />
+                            <h2>{name}</h2>
+                            
+                        <p className="bio">
+                            {seeMoreBio || bio.length <= 100 ? bio : `${bio.substring(0, 100)}...`}
+                            {bio.length > 100 && (
+                                <span className="see-more" onClick={() => setSeeMoreBio(!seeMoreBio)}>
+                                    {seeMoreBio ? " See Less" : " See More"}
+                                </span>
                             )}
+                            </p>
+                            {/* ✅ Streak and Points Display */}
+                            <div className="streak-points">
+                                <p>🔥 Streak: {streak} Days</p>
+                                <p>🏆 Points: {points}</p>
+
+                            </div>
+                           
+
+                        </div>
+
+                        {/* ✅ Edit Profile Button */}
+                        {isCurrentUser && (
+                            <div className="profile-info">
+                              
+                                {editingPostId ? (
+                                    <>
+                                        <label>Username:</label>
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+
+                                        <label>Bio:</label>
+                                        <textarea value={bio} onChange={(e) => setBio(e.target.value)} />
+
+                                        <button onClick={handleSaveProfile}>Save Profile</button>
+
+                                        
+                                    </>
+                                ) : (
+                                        <button className="edit-profile-btn" onClick={() => setIsEditingProfile(true)}>
+                                            Edit Profile
+                                        </button>
+
+                                ) 
+                            } 
+                              
+                            </div>
+                        )}
+
+                        {/* ✅ Logout Button (Added in profile header) */}
+                        {isCurrentUser && (
+                            <button onClick={handleLogout} className="logout-btn">🚪 Logout</button>
+                        )}
+
+                        <div className="user-posts">
+                            <h3>{isCurrentUser ? "Your Posts" : `${name}'s Posts`}</h3>
+
+                            {posts.length === 0 ? (
+                                <p>No posts yet.</p>
+                            ) : (
+                                posts.map((post) => (
+                                    <div key={post.id} className="post-card">
+                                        {/* ✅ Show Editable Textarea When Editing */}
+                                        {editingPostId === post.id ? (
+                                            <textarea
+                                                value={editingPostContent}
+                                                onChange={(e) => setEditingPostContent(e.target.value)}
+                                                className="edit-textarea"
+                                            />
+                                        ) : (
+                                            <p>
+                                                {expandedPosts[post.id] || (typeof post.content === "string" && post.content.length <= 200)
+                                                    ? post.content || "No content available"
+                                                    : typeof post.content === "string"
+                                                        ? `${post.content.substring(0, 200)}... `
+                                                        : "No content available"}
+                                                {typeof post.content === "string" && post.content.length > 200 && (
+                                                    <span className="see-more" onClick={() => toggleSeeMorePost(post.id)}>
+                                                        {expandedPosts[post.id] ? " See Less" : " See More"}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        )}
+
+                                        {post.imageUrl && <img src={post.imageUrl} alt="Post" className="post-image" />}
+                                        <p className="post-time">Posted on: {new Date(post.createdAt.seconds * 1000).toLocaleString()}</p>
+
+                                        {/* ✅ Edit and Delete Icons */}
+                                        {isCurrentUser && (
+                                            <div className="post-actions">
+                                                {editingPostId === post.id ? (
+                                                    <FaSave className="icon save-edit" onClick={() => handleSaveEdit(post.id)} />
+                                                ) : (
+                                                    <FaEdit className="icon edit-post" onClick={() => handleEditPost(post.id, post.content)} />
+                                                )}
+                                                <FaTrash className="icon delete-post" onClick={() => handleDeletePost(post.id, post.imageUrl)} />
+                                            </div>
+                                        )}
+
+                                    </div>
+                                ))
+                            )}
+
+                        </div>
+
+                    {/* ✅ Edit Profile Modal */}
+                    {isEditingProfile && (
+                        <div className="edit-profile-modal">
+                                <h3>Edit Profile</h3>
+                                <label>Username:</label>
+                            <input
+                                type="text"
+                                placeholder="Update Name"
+                                value={name}
+                                onChange={(e) => setNewName(e.target.value)}
+                            />
+                            <textarea
+                                placeholder="Update Bio"
+                                value={bio}
+                                onChange={(e) => setNewBio(e.target.value)}
+                            />
+                            <button onClick={handleSaveProfile}>Save</button>
+                            <button onClick={() => setIsEditingProfile(false)}>Cancel</button>
                         </div>
                     )}
-
-                    <div className="user-posts">
-                        <h3>{isCurrentUser ? "Your Posts" : `${name}'s Posts`}</h3>
-                        {posts.length === 0 ? (
-                            <p>No posts yet.</p>
-                        ) : (
-                            posts.map((post) => (
-                                <div key={post.id} className="post-card">
-                                    <p>{post.content}</p>
-                                    {post.imageUrl && (
-                                        <img src={post.imageUrl} alt="Post" className="post-image" />
-                                    )}
-                                    <p className="post-time">
-                                        Posted on:{" "}
-                                        {new Date(post.createdAt.seconds * 1000).toLocaleString()}
-                                    </p>
-
-                                    {isCurrentUser && (
-                                        <button
-                                            className="delete-post"
-                                            onClick={() => handleDeletePost(post.id, post.imageUrl)}
-                                        >
-                                            🗑 Delete
-                                        </button>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                    </div>
                 </>
             )}
         </div>

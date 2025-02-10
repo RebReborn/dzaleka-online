@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useRef } from "react";
 import { db, auth } from "../firebase";
 import { addDoc, collection, Timestamp, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -11,13 +11,20 @@ const CreatePost = () => {
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
+
+    // ✅ Debugging in development mode only
+    if (import.meta.env.MODE === "development") {
+        console.log("Cloudinary Cloud Name:", import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
+        console.log("Cloudinary Upload Preset:", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    }
 
     const uploadToCloudinary = async (file) => {
-        const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
-        const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+        const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
         if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-            console.error("Cloudinary credentials are missing");
+            console.error("❌ Cloudinary credentials are missing. Check your .env file.");
             return null;
         }
 
@@ -32,15 +39,16 @@ const CreatePost = () => {
                 body: formData,
             });
 
-            if (!response.ok) throw new Error(`Cloudinary upload failed: ${response.statusText}`);
+            if (!response.ok) throw new Error(`❌ Cloudinary upload failed: ${response.statusText}`);
 
             const data = await response.json();
-            setLoading(false);
             return data.secure_url;
         } catch (error) {
-            console.error("Cloudinary Upload Error:", error);
-            setLoading(false);
+            console.error("❌ Cloudinary Upload Error:", error);
+            Swal.fire({ icon: "error", title: "Upload failed", text: "Image upload failed. Try again." });
             return null;
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -102,51 +110,82 @@ const CreatePost = () => {
             imageUrl = await uploadToCloudinary(image);
             if (!imageUrl) {
                 setLoading(false);
-                Swal.fire({ icon: "error", title: "Upload failed", text: "Image upload failed. Try again." });
                 return;
             }
         }
 
-        await addDoc(collection(db, "posts"), {
-            userId: auth.currentUser.uid,
-            username: auth.currentUser.displayName || "Anonymous",
-            title: title.trim() || "",
-            content,
-            imageUrl,
-            createdAt: Timestamp.now(),
-            likes: [],
-            comments: [],
-        });
+        try {
+            await addDoc(collection(db, "posts"), {
+                userId: auth.currentUser.uid,
+                username: auth.currentUser.displayName || "Anonymous",
+                title: title.trim() || "",
+                content: content.trim(),
+                imageUrl,
+                createdAt: Timestamp.now(),
+                likes: [],
+                comments: [],
+            });
 
-        setLoading(false);
+            Swal.fire({
+                icon: "success",
+                title: "Post Created!",
+                text: "Your post has been shared successfully.",
+                timer: 2000,
+                showConfirmButton: false,
+            });
 
-        Swal.fire({
-            icon: "success",
-            title: "Post Created!",
-            text: "Your post has been shared successfully.",
-            timer: 2000,
-            showConfirmButton: false,
-        });
+            updateUserActivity(image ? "postWithImage" : "postWithoutImage");
 
-        updateUserActivity(image ? "postWithImage" : "postWithoutImage");
+            // ✅ Reset form
+            setTitle("");
+            setContent("");
+            setImage(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
 
-        navigate("/feed");
+            navigate("/feed");
+        } catch (error) {
+            console.error("❌ Firestore Error:", error);
+            Swal.fire({ icon: "error", title: "Post Failed", text: "Something went wrong. Try again." });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="post-container">
             <h2>Create a New Post</h2>
-            <input type="text" placeholder="Enter a title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} className="post-title-input" />
-            <textarea placeholder="Share something..." value={content} onChange={(e) => setContent(e.target.value)} />
-            <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} />
+            <input
+                type="text"
+                placeholder="Enter a title (optional)"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="post-title-input"
+                disabled={loading}
+            />
+            <textarea
+                placeholder="Share something..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                disabled={loading}
+            />
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+                disabled={loading}
+            />
 
             {image && (
                 <div className="image-preview">
                     <img src={URL.createObjectURL(image)} alt="Preview" className="preview-image" />
+                    <button className="remove-image" onClick={() => setImage(null)}>✖</button>
                 </div>
             )}
 
-            <button onClick={handlePost} disabled={loading}>{loading ? "Posting..." : "Post"}</button>
+            <button onClick={handlePost} disabled={loading || !content.trim()}>
+                {loading ? "Posting..." : "Post"}
+            </button>
         </div>
     );
 };

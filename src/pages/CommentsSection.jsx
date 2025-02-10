@@ -1,47 +1,43 @@
 ﻿import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
-import "../styles/comments.css";
+import "../styles/comments.css"; // Import the new comment styles
+import { FaTimes } from "react-icons/fa";
 
-const CommentsSection = ({ post, onClose }) => {
+const CommentsSection = ({ postId, onClose }) => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
 
     useEffect(() => {
-        if (post.comments) {
-            setComments(post.comments);
-        } else {
-            setComments([]);
-        }
-    }, [post]);
+        const fetchComments = async () => {
+            const postRef = doc(db, "posts", postId);
+            const postSnap = await getDoc(postRef);
 
-    const handleCommentSubmit = async () => {
-        if (!newComment.trim()) return;
-
-        const userId = auth.currentUser?.uid;
-        if (!userId) return;
-
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        let username = "Anonymous";
-        let userProfilePic = "https://i.pravatar.cc/40";
-
-        if (userSnap.exists()) {
-            username = userSnap.data().name || "Anonymous";
-            userProfilePic = userSnap.data().photoURL || userProfilePic;
-        }
-
-        const newCommentData = {
-            userId,
-            username,
-            text: newComment,
-            createdAt: new Date(),
-            userProfilePic
+            if (postSnap.exists()) {
+                setComments(postSnap.data().comments || []);
+            }
         };
 
-        const postRef = doc(db, "posts", post.id);
+        fetchComments();
+    }, [postId]);
+
+    const handleCommentSubmit = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const newCommentData = {
+            userId: user.uid,
+            username: user.displayName || "Anonymous",
+            text: newComment,
+            createdAt: new Date(),
+        };
+
+        const postRef = doc(db, "posts", postId);
         await updateDoc(postRef, {
-            comments: arrayUnion(newCommentData)
+            comments: arrayUnion(newCommentData),
         });
 
         setComments([...comments, newCommentData]);
@@ -49,36 +45,53 @@ const CommentsSection = ({ post, onClose }) => {
     };
 
     return (
-        <div className="comment-overlay">
-            <div className="comment-box">
-                <button className="close-btn" onClick={onClose}>✖</button>
-                <h3>Comments</h3>
-
-                <div className="comment-list">
-                    {comments.length > 0 ? (
-                        comments.map((comment, index) => (
-                            <div key={index} className="comment-item">
-                                <img src={comment.userProfilePic} alt="User" className="comment-profile-pic" />
-                                <div>
-                                    <strong>{comment.username}</strong>
-                                    <p className="comment-text">{comment.text}</p>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="no-comments">No comments yet.</p>
-                    )}
+        <div className="comment-modal">
+            <div className="modal-content">
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <h3>Comments</h3>
+                    <button className="close-btn" onClick={onClose}><FaTimes /></button>
                 </div>
 
-                <div className="comment-input-box">
-                    <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        className="comment-input"
-                    />
-                    <button onClick={handleCommentSubmit} className="comment-btn">Post</button>
+                {/* Comment List */}
+                <div className="modal-body">
+                    <div className="comments">
+                        {comments.length === 0 ? (
+                            <p className="no-comments">No comments yet.</p>
+                        ) : (
+                            comments.map((comment, index) => (
+                                <div key={index} className="comment">
+                                    <div className="commenter-img">
+                                        <img src="https://via.placeholder.com/32" alt="User" />
+                                    </div>
+                                    <div className="comment-content">
+                                        <div className="commenter-info">
+                                            <h4>{comment.username}</h4>
+                                            <span>• Just now</span>
+                                        </div>
+                                        <p>{comment.text}</p>
+                                        <div className="comment-actions">
+                                            <button>Like</button>
+                                            <button>Reply</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Comment Input */}
+                <div className="modal-footer">
+                    <form className="comment-form" onSubmit={handleCommentSubmit}>
+                        <input
+                            type="text"
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                        />
+                        <button type="submit">Post</button>
+                    </form>
                 </div>
             </div>
         </div>

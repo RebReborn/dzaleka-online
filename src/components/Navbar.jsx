@@ -76,7 +76,7 @@ const Navbar = () => {
         <>
             <nav className={`navbar ${hideNavbar ? "hidden-navbar" : ""}`}>
                 <div className="nav-left">
-                    <Link to="/feed" className="nav-logo">Dzaleka Online</Link>
+                    <Link to="/feed" className="nav-logo">Dzaleka Cty</Link>
                 </div>
                 <div className="nav-icons">
                     <Link to="/feed" className="nav-icon"><FiHome /></Link>

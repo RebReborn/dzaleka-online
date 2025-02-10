@@ -185,8 +185,8 @@ const Newsfeed = () => {
 
             {!loading && posts.length === 0 && <p>No posts available.</p>}
 
-            {posts.map((post) => (
-                <div key={post.id} className="post-card" onDoubleClick={() => handleDoubleTapLike(post.id)}>
+            {posts.map((post,index) => (
+                <div key={`${post.id}-${index}`} className="post-card" onDoubleClick={() => handleDoubleTapLike(post.id)}>
                     <div className="post-header">
                         <img src={post.userProfilePic} alt="User" className="profile-pic" />
                         <Link to={`/profile/${post.userId}`} className="username">
@@ -201,11 +201,12 @@ const Newsfeed = () => {
 
                     {post.title && <h3 className="post-title">{post.title}</h3>}
 
+                    {/* ✅ Ensure `post.content` is always a string */}
                     <p>
-                        {expandedPosts[post.id] || post.content?.length <= 200
-                            ? post.content
-                            : `${post.content?.substring(0, 200)}... `}
-                        {post.content?.length > 200 && (
+                        {expandedPosts[post.id] || (typeof post.content === "string" && post.content.length <= 200)
+                            ? String(post.content || "No content available")
+                            : `${String(post.content || "").slice(0, 200)}... `}
+                        {typeof post.content === "string" && post.content.length > 200 && (
                             <span
                                 className="see-more"
                                 onClick={() => toggleSeeMore(post.id)}
@@ -230,14 +231,18 @@ const Newsfeed = () => {
                                 <FaRegHeart />
                             )}
                         </span>
-                        <span className="like-count">{post.likes?.length || 0} Likes</span>
+                        <span className="like-count">{Array.isArray(post.likes) ? post.likes.length : 0} Likes</span>
                         <span className="comment-icon" onClick={() => setCommentPost(post)}>
                             <FaComment />
-                            {post.comments?.length > 0 && <span className="comment-badge">{post.comments.length}</span>}
+                            {Array.isArray(post.comments) && post.comments.length > 0 && (
+                                <span className="comment-badge">{post.comments.length}</span>
+                            )}
                         </span>
                     </div>
                 </div>
             ))}
+
+
 
             {commentPost && <CommentsSection post={commentPost} onClose={() => setCommentPost(null)} />}
             <div id="loadMoreTrigger" style={{ height: "20px" }}></div>

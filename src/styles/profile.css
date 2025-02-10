@@ -1,12 +1,12 @@
 ﻿/* ✅ FIXED PROFILE CONTAINER */
 .profile-container {
-    width: 50%;
+    width: 100%;
     margin: 40px auto;
     padding: 20px;
     background: white;
     border-radius: 10px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    text-align: justify-all;
 }
 
 /* ✅ PROFILE HEADER */
@@ -29,13 +29,12 @@
 /* ✅ PROFILE INFO */
 .profile-info {
     text-align: left;
-    padding: 10px;
+    padding: 10px, 15px;
 }
 
     .profile-info input,
     .profile-info textarea {
-        width: 100%;
-        padding: 10px;
+        width: 100%; 
         border: 1px solid #ddd;
         border-radius: 5px;
     }
@@ -54,6 +53,156 @@
         .profile-info button:hover {
             background: #1a5ac7;
         }
+
+/* ✅ Adjust Icons Position in the Post Card */
+.post-actions {
+    position: absolute;
+    bottom: 2px;
+    background:none;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    font-size: 18px;
+}
+
+.edit-icon,
+.delete-icon {
+    cursor: pointer;
+    color: #555;
+    transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+    .edit-icon:hover {
+        color: #1a73e8; /* Blue color for edit */
+        transform: scale(1.2);
+    }
+
+    .delete-icon:hover {
+        color: #d32f2f; /* Red color for delete */
+        transform: scale(1.2);
+    }
+
+
+.post-card {
+    position: relative;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+/* ✅ Edit Profile Modal */
+.edit-profile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.edit-profile-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.edit-profile-content input,
+.edit-profile-content textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.save-btn {
+    background: #2575fc;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    flex: 1;
+    margin-right: 5px;
+    transition: 0.3s;
+}
+
+.cancel-btn {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    flex: 1;
+    margin-left: 5px;
+    transition: 0.3s;
+}
+
+.save-btn:hover {
+    background: #1a5ac7;
+}
+
+.cancel-btn:hover {
+    background: #b71c1c;
+}
+
+.icon {
+    font-size: 20px;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: transform 0.2s ease-in-out;
+}
+
+    .icon:hover {
+        transform: scale(1.1); /* Slight zoom effect on hover */
+    }
+
+/* Color customizations */
+.save-edit {
+    color: green;
+}
+
+.edit-post {
+    color: black;
+}
+
+.delete-post {
+    color: #d9534f;
+}
+
+.logout-btn {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #c9302c;
+}
+
+
+
 
 /* ✅ FIX MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {

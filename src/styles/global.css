@@ -75,7 +75,7 @@ body, html {
 /* ✅ Fix Post Layout */
 .post-card {
     background-color: #fff;
-    padding: 15px;
+    padding: 15;
     margin-bottom: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -211,7 +211,7 @@ body, html {
     .newsfeed-container,
     .profile-container {
         width: 95%;
-        padding: 15px;
+        padding: 5px;
     }
 
     .profile-pic {

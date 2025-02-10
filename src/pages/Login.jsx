@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { auth, signInWithGoogle } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../styles/Login.css";
 
 const Login = () => {
@@ -50,8 +51,11 @@ const Login = () => {
                 <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="submit" disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
+                
             </form>
             <button onClick={handleGoogleLogin} disabled={loading}>{loading ? "Signing in..." : "Sign in with Google"}</button>
+            <p>Don't have an account? <Link to="/signup">Sign Up</Link></p>
+
         </div>
     );
 };
