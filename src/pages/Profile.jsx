@@ -315,29 +315,36 @@ const Profile = () => {
                         {/* ✅ Edit Profile Button */}
                         {isCurrentUser && (
                             <div className="profile-info">
-                              
-                                {editingPostId ? (
+                                {isEditingProfile ? ( // ✅ Now properly checking for profile edit mode
                                     <>
                                         <label>Username:</label>
-                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+                                        <input
+                                            type="text"
+                                            value={newName} // ✅ Uses `newName` instead of `name`
+                                            onChange={(e) => setNewName(e.target.value)}
+                                        />
 
                                         <label>Bio:</label>
-                                        <textarea value={bio} onChange={(e) => setBio(e.target.value)} />
+                                        <textarea
+                                            value={newBio} // ✅ Uses `newBio` instead of `bio`
+                                            onChange={(e) => setNewBio(e.target.value)}
+                                        />
 
                                         <button onClick={handleSaveProfile}>Save Profile</button>
-
-                                        
+                                        <button onClick={() => setIsEditingProfile(false)}>Cancel</button>
                                     </>
                                 ) : (
-                                        <button className="edit-profile-btn" onClick={() => setIsEditingProfile(true)}>
-                                            Edit Profile
-                                        </button>
-
-                                ) 
-                            } 
-                              
+                                    <button className="edit-profile-btn" onClick={() => {
+                                        setNewName(name); // ✅ Set current name before editing
+                                        setNewBio(bio);   // ✅ Set current bio before editing
+                                        setIsEditingProfile(true);
+                                    }}>
+                                        Edit Profile
+                                    </button>
+                                )}
                             </div>
                         )}
+
 
                         {/* ✅ Logout Button (Added in profile header) */}
                         {isCurrentUser && (
@@ -396,25 +403,7 @@ const Profile = () => {
                         </div>
 
                     {/* ✅ Edit Profile Modal */}
-                    {isEditingProfile && (
-                        <div className="edit-profile-modal">
-                                <h3>Edit Profile</h3>
-                                <label>Username:</label>
-                            <input
-                                type="text"
-                                placeholder="Update Name"
-                                value={name}
-                                onChange={(e) => setNewName(e.target.value)}
-                            />
-                            <textarea
-                                placeholder="Update Bio"
-                                value={bio}
-                                onChange={(e) => setNewBio(e.target.value)}
-                            />
-                            <button onClick={handleSaveProfile}>Save</button>
-                            <button onClick={() => setIsEditingProfile(false)}>Cancel</button>
-                        </div>
-                    )}
+                    
                 </>
             )}
         </div>

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase";
+import { addDoc, Timestamp } from "firebase/firestore";
 import {
     collection,
     query,
@@ -150,7 +151,9 @@ const Newsfeed = () => {
         }
     };
 
-    const handleLike = async (postId) => {
+   
+
+    const handleLike = async (postId, postOwnerId) => {
         const userId = auth.currentUser?.uid;
         if (!userId) return;
 
@@ -162,14 +165,23 @@ const Newsfeed = () => {
             likes: hasLiked ? arrayRemove(userId) : arrayUnion(userId),
         });
 
-        setPosts((prevPosts) =>
-            prevPosts.map((p) =>
-                p.id === postId
-                    ? { ...p, likes: hasLiked ? p.likes.filter((id) => id !== userId) : [...(p.likes || []), userId] }
-                    : p
-            )
-        );
+        // ✅ Add notification only when liking (not unliking)
+        if (!hasLiked) {
+            await addDoc(collection(db, "notifications"), {
+                receiverId: postOwnerId,
+                senderName: auth.currentUser.displayName || "Anonymous",
+                type: "like",
+                postId: postId,
+                timestamp: Timestamp.now(),
+                seen: false,
+            });
+
+            console.log("🔥 Notification added for like!");
+            console.log("🔥 Adding notification for:", post.userId);
+        }
     };
+
+
 
     const toggleSeeMore = (postId) => {
         setExpandedPosts((prevState) => ({

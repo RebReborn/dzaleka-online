@@ -6,7 +6,10 @@ import CreatePost from "./pages/CreatePost.jsx";
 import Newsfeed from "./pages/Newsfeed.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Navbar from "./components/Navbar.jsx";
+import PostDetail from "./components/PostDetail";
 import SignUp from "./pages/SignUp";
+import PostPage from "./pages/PostPage"; // ✅ Import PostPage
+
 import "./styles/global.css";
 
 const App = () => {
@@ -60,6 +63,8 @@ const App = () => {
                 <Route path="/create" element={<CreatePost />} />
                 <Route path="*" element={<Navigate to="/login" />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/post/:postId" element={<PostPage />} />
+                <Route path="/post/:postId" element={<PostDetail />} />
             </Routes>
         </Router>
     );

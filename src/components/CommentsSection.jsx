@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { db, auth } from "../firebase";
-import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, getDoc, onSnapshot } from "firebase/firestore";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import PropTypes from "prop-types"; // ✅ Import PropTypes
 import "../styles/comments.css";
 
 const CommentsSection = ({ post, onClose }) => {
@@ -8,14 +10,21 @@ const CommentsSection = ({ post, onClose }) => {
     const [newComment, setNewComment] = useState("");
     const commentBoxRef = useRef(null);
     const inputRef = useRef(null);
+    const commentsEndRef = useRef(null);
 
+    // ✅ Fetch comments in real-time from Firestore
     useEffect(() => {
-        if (post.comments) {
-            setComments(post.comments);
-        } else {
-            setComments([]);
-        }
-    }, [post]);
+        if (!post.id) return;
+
+        const postRef = doc(db, "posts", post.id);
+        const unsubscribe = onSnapshot(postRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setComments(docSnap.data().comments || []);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [post.id]);
 
     // ✅ Auto-focus input when comment section opens
     useEffect(() => {
@@ -24,10 +33,20 @@ const CommentsSection = ({ post, onClose }) => {
         }
     }, []);
 
-    // ✅ Close comment box when clicking outside
+    // ✅ Auto-scroll to latest comment when new comment is added
+    useEffect(() => {
+        if (commentsEndRef.current) {
+            commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [comments]);
+
+    // ✅ Close comment box when clicking outside, but NOT when typing
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (commentBoxRef.current && !commentBoxRef.current.contains(event.target)) {
+                if (inputRef.current && inputRef.current === document.activeElement) {
+                    return; // Don't close if input is active
+                }
                 onClose();
             }
         };
@@ -45,29 +64,56 @@ const CommentsSection = ({ post, onClose }) => {
         const userRef = doc(db, "users", userId);
         const userSnap = await getDoc(userRef);
         let username = "Anonymous";
-        let userProfilePic = "https://i.pravatar.cc/40";
 
         if (userSnap.exists()) {
             username = userSnap.data().name || "Anonymous";
-            userProfilePic = userSnap.data().photoURL || userProfilePic;
+        }
+
+        // ✅ Get the post owner's user ID
+        const postRef = doc(db, "posts", post.id);
+        const postSnap = await getDoc(postRef);
+        if (!postSnap.exists()) {
+            console.error("❌ Post not found. Notification cannot be sent.");
+            return;
+        }
+
+        const postOwnerId = postSnap.data().userId;
+        if (!postOwnerId) {
+            console.error("❌ No post owner found! Skipping notification.");
+            return;
         }
 
         const newCommentData = {
             userId,
             username,
             text: newComment,
-            createdAt: new Date().toISOString(),
-            userProfilePic
+            createdAt: Timestamp.now(),
         };
 
-        const postRef = doc(db, "posts", post.id);
         await updateDoc(postRef, {
-            comments: arrayUnion(newCommentData)
+            comments: arrayUnion(newCommentData),
         });
 
-        setComments([...comments, newCommentData]);
-        setNewComment("");
+        setComments((prevComments) => [...prevComments, newCommentData]);
+
+        // ✅ Add notification for comment (only if postOwnerId exists)
+        await addDoc(collection(db, "notifications"), {
+            receiverId: postOwnerId, // ✅ Ensure this exists!
+            senderName: username,
+            type: "comment",
+            postId: post.id,
+            timestamp: Timestamp.now(),
+            seen: false,
+        });
+
+        console.log("🔥 Notification added for comment!");
     };
+
+
+
+
+
+
 
     return (
         <div className="comment-overlay">
@@ -90,6 +136,7 @@ const CommentsSection = ({ post, onClose }) => {
                     ) : (
                         <p className="no-comments">No comments yet.</p>
                     )}
+                    <div ref={commentsEndRef}></div> {/* ✅ Auto-scroll to this element */}
                 </div>
 
                 {/* ✅ Comment Input Field */}
@@ -107,6 +154,16 @@ const CommentsSection = ({ post, onClose }) => {
             </div>
         </div>
     );
+
+};
+
+CommentsSection.propTypes = {
+    post: PropTypes.shape({
+        id: PropTypes.string.isRequired, // Ensures post has an ID
+        userId: PropTypes.string, // Optional but recommended
+        comments: PropTypes.array, // Ensures comments are an array
+    }).isRequired,
+    onClose: PropTypes.func.isRequired, // Ensures `onClose` is a function
 };
 
 export default CommentsSection;
