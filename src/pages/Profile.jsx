@@ -121,26 +121,98 @@ const Profile = () => {
         }
     };
 
-    const handleProfilePictureChange = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    // ✅ Import Cloudinary Widget
+    const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME; // ✅ Works in Vite
+    const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET; // ✅ Works in Vite
+    const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
 
-        const storageRef = ref(storage, `profile_pictures/${auth.currentUser.uid}`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
+// ✅ Ensure Cloudinary widget is loaded
+const loadCloudinaryWidget = () => {
+    if (!window.cloudinary) {
+        const script = document.createElement("script");
+        script.src = "https://widget.cloudinary.com/v2.0/global/all.js";
+        script.async = true;
+        document.body.appendChild(script);
+    }
+};
 
-        setProfilePic(downloadURL);
+    useEffect(() => {
+        if (!window.cloudinary) {
+            const script = document.createElement("script");
+            script.src = "https://widget.cloudinary.com/v2.0/global/all.js";
+            script.async = true;
+            script.onload = () => {
+                console.log("✅ Cloudinary script loaded!");
+            };
+            document.body.appendChild(script);
+        }
+    }, []);
 
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, { photoURL: downloadURL });
-
+const handleProfilePictureChange = async () => {
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+        console.error("❌ Cloudinary credentials are missing.");
         Swal.fire({
-            icon: "success",
-            title: "Profile Picture Updated!",
-            timer: 2000,
-            showConfirmButton: false,
+            icon: "error",
+            title: "Missing Credentials",
+            text: "Cloudinary credentials are not set properly.",
         });
-    };
+        return;
+    }
+
+    loadCloudinaryWidget(); // ✅ Load widget if not already loaded
+
+    const widget = window.cloudinary.createUploadWidget(
+        {
+            cloudName: CLOUD_NAME,
+            uploadPreset: UPLOAD_PRESET,
+            folder: "profile_pictures",
+            cropping: true,
+            multiple: false,
+            maxFiles: 1,
+            resourceType: "image",
+        },
+        async (error, result) => {
+            if (error) {
+                console.error("❌ Cloudinary upload error:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Upload Failed",
+                    text: "Something went wrong while updating your profile picture.",
+                });
+                return;
+            }
+
+            if (result.event === "success") {
+                const imageUrl = result.info.secure_url;
+                console.log("✅ Uploaded Image URL:", imageUrl);
+
+                try {
+                    // ✅ Save image URL to Firestore
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    await updateDoc(userRef, { photoURL: imageUrl });
+
+                    // ✅ Update UI
+                    setProfilePic(imageUrl);
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Profile Picture Updated!",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+                } catch (firestoreError) {
+                    console.error("❌ Error saving to Firestore:", firestoreError);
+                }
+            }
+        }
+    );
+
+    widget.open(); // ✅ Open the upload widget
+};
+
+
+
+
 
     const handleSaveProfile = async () => {
         if (!auth.currentUser) return;
@@ -282,16 +354,13 @@ const Profile = () => {
                 <>
                     <div className="profile-header">
                         {/* ✅ Profile Picture Upload */}
-                        <label htmlFor="profile-pic-upload">
+                            <label htmlFor="profile-pic-upload" className="profile-pic-label">
                             <img src={profilePic} alt="Profile" className="profile-pic" />
                         </label>
-                        <input
-                            type="file"
-                            id="profile-pic-upload"
-                            accept="image/*"
-                            style={{ display: "none" }}
-                            onChange={(e) => setProfilePic(URL.createObjectURL(e.target.files[0]))}
-                        />
+                            <button className="upload-btn" onClick={handleProfilePictureChange}>
+                                Upload New Profile Picture
+                            </button>
+
                             <h2>{name}</h2>
                             
                         <p className="bio">
