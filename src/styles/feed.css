@@ -35,6 +35,14 @@ body, html {
     padding: 0px;
     background: white;
 }
+    .newsfeed-container .profile-pic {
+        width: 50px; /* Profile pic size in feed */
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 5px;
+        border: 2px solid #2575fc;
+    }
 
 /* ✅ Navbar Fix: Prevents Overlap */
 .navbar {
@@ -88,19 +96,20 @@ body, html {
     margin-bottom: 10px;
 }
 
-.profile-pic {
-    width: 35px; /* Smaller Profile Picture */
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 5px; /* Reduced Spacing */
-    border: 2px solid #2575fc;
-}
-
+/* ✅ Fix Username in Feed */
 .username {
     font-weight: bold;
     font-size: 14px;
+    color: var(--text-color) !important; /* ✅ Ensures it follows the theme */
+    text-decoration: none !important; /* ✅ No underline */
+    cursor: pointer;
 }
+
+    .username:hover {
+        color: var(--primary-color) !important; /* ✅ Adds a slight hover effect */
+    }
+
+
 
 /* 🔹 Post Time (Timestamp) */
 .post-time {
@@ -230,10 +239,10 @@ body, html {
         padding: 5px;
     }
 
-    .profile-pic {
-        width: 30px;
-        height: 30px;
-    }
+        .newsfeed-container .profile-pic {
+            width: 40px;
+            height: 40px;
+        }
 
     .navbar {
         padding: 8px 10px;

@@ -30,7 +30,11 @@ const Profile = () => {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [newName, setNewName] = useState(name);
     const [newBio, setNewBio] = useState(bio);
-
+    const [profileData, setProfileData] = useState({
+        fullName: "",
+        username: "",
+        bio: "",
+    });
 
     useEffect(() => {
         if (!auth.currentUser) {
@@ -47,6 +51,11 @@ const Profile = () => {
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
                     setUser(userData);
+                    setProfileData({
+                        fullName: userData.fullName || "No Name",
+                        username: userData.username || "Anonymous",
+                        bio: userData.bio || "No bio added yet.", // ✅ Ensures bio is not empty
+                    });
                     setName(userData.name || "Anonymous");
                     setBio(userData.bio || "No bio available");
                     setProfilePic(userData.photoURL || "https://i.pravatar.cc/150");
@@ -60,7 +69,7 @@ const Profile = () => {
                     await updateStreak(userRef, userData.lastActiveDate);
                 }
             } catch (error) {
-                console.error("Error fetching user profile:", error);
+                console.error("❌ User profile not found.", error);
             } finally {
                 setLoading(false);
             }
@@ -350,6 +359,7 @@ const handleProfilePictureChange = async () => {
         <div className="profile-container" {...handlers} style={{ paddingTop: "10px" }}>
             {loading ? (
                 <p>Loading profile...</p>
+
             ) : (
                 <>
                     <div className="profile-header">

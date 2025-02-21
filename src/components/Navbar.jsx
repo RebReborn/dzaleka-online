@@ -12,6 +12,7 @@ import {
     writeBatch
 } from "firebase/firestore";
 import { FiHome, FiUser, FiPlusCircle, FiBell } from "react-icons/fi";
+import { MdDarkMode, MdLightMode } from "react-icons/md"; // ✅ Import Theme Icons
 import "../styles/navbar.css";
 
 const Navbar = () => {
@@ -19,22 +20,22 @@ const Navbar = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
     const [hideNavbar, setHideNavbar] = useState(false);
+    const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
     const navigate = useNavigate();
     let lastScrollY = window.scrollY;
 
     useEffect(() => {
-        // Dynamically inject meta tag to prevent zooming
-        const metaTag = document.createElement("meta");
-        metaTag.name = "viewport";
-        metaTag.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
-        document.head.appendChild(metaTag);
-    }, []);
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [theme]);
 
+    // ✅ Toggle Theme Function
+    const toggleTheme = () => {
+        setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    };
 
     useEffect(() => {
         if (!auth.currentUser) return;
-
-        console.log("📩 Fetching notifications for:", auth.currentUser.uid);
 
         const q = query(
             collection(db, "notifications"),
@@ -43,80 +44,20 @@ const Navbar = () => {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            console.log("🔥 Snapshot received:", snapshot.docs.length);
-
             if (!snapshot.empty) {
-                const fetchedNotifications = snapshot.docs.map((doc) => {
-                    const data = doc.data();
-                    console.log("📩 Notification Data:", data);
-
-                    if (!data || !data.type || !data.timestamp) {
-                        console.warn("⚠️ Invalid notification:", data);
-                        return null;
-                    }
-
-                    return { id: doc.id, ...data };
-                }).filter(Boolean); // Remove null values
+                const fetchedNotifications = snapshot.docs.map((doc) => ({
+                    id: doc.id, ...doc.data(),
+                }));
 
                 setNotifications(fetchedNotifications);
                 setUnreadCount(fetchedNotifications.filter((notif) => !notif.seen).length);
-                console.log("Fetched Notifications:", fetchedNotifications);
-
             } else {
-                console.log("⚠️ No notifications found.");
                 setNotifications([]);
             }
-        }, (error) => {
-            console.error("❌ Firestore Error:", error);
         });
 
         return () => unsubscribe();
     }, []);
-
-
-
-    useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            setHideNavbar(currentScrollY > lastScrollY && currentScrollY > 50);
-            lastScrollY = currentScrollY;
-        };
-
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    // ✅ Mark all notifications as read
-    const markAllAsRead = async () => {
-        if (!notifications.length) return;
-
-        const batch = writeBatch(db);
-        notifications.forEach((notification) => {
-            if (!notification.seen) {
-                const notificationRef = doc(db, "notifications", notification.id);
-                batch.update(notificationRef, { seen: true });
-            }
-        });
-
-        await batch.commit();
-        setUnreadCount(0);
-    };
-
-    // ✅ Handle notification click (navigate to post)
-    console.log("✅ handleNotificationClick function is being called");
-
-    const handleNotificationClick = (postId) => {
-        if (postId) {
-            console.log(`🔔 Notification clicked. Navigating to post: ${postId}`);
-            navigate(`/post/${postId}`);
-            setShowDropdown(false);
-        } else {
-            console.warn("⚠️ No post ID found in notification.");
-        }
-    };
-
-
-
 
     return (
         <>
@@ -127,16 +68,20 @@ const Navbar = () => {
                 <div className="nav-icons">
                     <Link to="/feed" className="nav-icon"><FiHome /></Link>
 
-                    {/* ✅ Notification Dropdown */}
                     <div className="notification-container" onClick={() => {
                         setShowDropdown(!showDropdown);
-                        markAllAsRead();
+                        setUnreadCount(0);
                     }}>
                         <FiBell className="nav-icon notification-icon" />
                         {unreadCount > 0 && <span className="notification-dot">{unreadCount}</span>}
                     </div>
 
                     <Link to="/profile" className="nav-icon"><FiUser /></Link>
+
+                    {/* ✅ Theme Toggle Icon */}
+                    <span className="theme-icon" onClick={toggleTheme}>
+                        {theme === "light" ? <MdDarkMode /> : <MdLightMode />}
+                    </span>
                 </div>
 
                 {showDropdown && (
@@ -148,10 +93,10 @@ const Navbar = () => {
                                 <p
                                     key={notif.id}
                                     className="notif-item"
-                                    onClick={() => handleNotificationClick(notif.postId)}
+                                    onClick={() => navigate(`/post/${notif.postId}`)}
                                     style={{
                                         cursor: notif.postId ? "pointer" : "default",
-                                        background: notif.seen ? "#f5f5f5" : "#d1e7fd", // ✅ Highlight unread
+                                        background: notif.seen ? "#f5f5f5" : "#d1e7fd",
                                     }}
                                 >
                                     <strong>{notif.senderName}</strong> {notif.type === "like" ? "liked" : "commented on"} your post.
@@ -160,7 +105,6 @@ const Navbar = () => {
                         )}
                     </div>
                 )}
-
             </nav>
 
             <Link to="/create-post" className="floating-post-btn">
